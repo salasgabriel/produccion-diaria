@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Producción Diaria - Químicos La Bella</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+
+        <!-- HEADER PRINCIPAL EN PANTALLA -->
+        <header>
+            <div class="brand">
+                <h1>Producción Diaria</h1>
+                <span id="estado-conexion" class="status-badge status-off">● Conectando...</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-blue" onclick="toggleModal(true)">📋 Fórmulas Base</button>
+            </div>
+        </header>
+
+        <!-- PESTAÑAS -->
+        <nav class="tabs">
+            <button class="tab active" id="tab-dia" onclick="mostrarVista('dia')">📝 Carga diaria</button>
+            <button class="tab" id="tab-rango" onclick="mostrarVista('rango')">📊 Reportes por rango de fechas</button>
+        </nav>
+
+        <!-- ===================== VISTA: CARGA DIARIA ===================== -->
+        <section id="vista-dia" class="vista">
+
+            <!-- HEADER PARA IMPRESIÓN -->
+            <div class="print-only-header">
+                <h1>Reporte Diario de Producción y Consumo de Espuma</h1>
+                <p id="print-fecha-display">FECHA: --/--/----</p>
+            </div>
+
+            <div class="toolbar">
+                <div class="date-picker-group">
+                    <label for="fecha-reporte">Fecha:</label>
+                    <input type="date" id="fecha-reporte" onchange="cambiarFechaReporte(this.value)">
+                </div>
+                <button class="btn btn-blue" onclick="window.print()">🖨️ Imprimir Reporte</button>
+                <button class="btn btn-danger" onclick="reiniciarDia()">🔄 Reiniciar Día</button>
+            </div>
+
+            <div class="main-grid">
+                <!-- COLUMNA IZQUIERDA: FORMULARIO DE CARGA -->
+                <div class="card form-card">
+                    <div class="card-title">
+                        <span>Agregar Lote Producido</span>
+                    </div>
+                    <form id="production-form" onsubmit="agregarLote(event)">
+                        <div class="form-group">
+                            <label for="cajon">Cajón</label>
+                            <select id="cajon" class="form-control" onchange="actualizarOpcionesDensidad()" required>
+                                <option value="240">CAJÓN 240</option>
+                                <option value="280">CAJÓN 280</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="densidad">Densidad</label>
+                            <select id="densidad" class="form-control" required>
+                                <!-- Opciones cargadas por JS -->
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cantidad">Bloques Producidos (Unidades)</label>
+                            <input type="number" id="cantidad" class="form-control" min="1" step="1" placeholder="Ej: 5" required>
+                        </div>
+
+                        <button type="submit" id="btn-agregar" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">
+                            Añadir a la Lista Diaria
+                        </button>
+                    </form>
+                </div>
+
+                <!-- COLUMNA DERECHA: RESULTADOS Y LOTES CARGADOS -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Consumo Total (<span id="fecha-titulo-display">--/--/----</span>)</span>
+                            <span id="bloques-totales-badge" style="font-size: 0.85rem; color: var(--accent-green);">0 bloques en total</span>
+                        </div>
+
+                        <div class="total-box">
+                            <span class="title">MATERIA PRIMA TOTAL:</span>
+                            <span class="value" id="total-general-kg">0,00 KG</span>
+                        </div>
+
+                        <div class="summary-grid" id="summary-cards"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Registro de Lotes (<span id="fecha-lista-display">--/--/----</span>)</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Cajón</th>
+                                        <th>Densidad</th>
+                                        <th>Cantidad</th>
+                                        <th>Peso Lote Aprox.</th>
+                                        <th class="action-col" style="text-align: right;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-lotes"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== VISTA: REPORTE POR RANGO ===================== -->
+        <section id="vista-rango" class="vista vista-rango hidden">
+
+            <!-- HEADER PARA IMPRESIÓN -->
+            <div class="print-only-header">
+                <h1>Reporte de Producción y Consumo de Espuma</h1>
+                <p id="print-rango-display">PERÍODO: --/--/---- al --/--/----</p>
+            </div>
+
+            <div class="card filtros-card">
+                <div class="card-title">
+                    <span>Filtrar por rango de fechas</span>
+                </div>
+                <div class="filtros">
+                    <div class="date-picker-group">
+                        <label for="fecha-desde">Desde:</label>
+                        <input type="date" id="fecha-desde">
+                    </div>
+                    <div class="date-picker-group">
+                        <label for="fecha-hasta">Hasta:</label>
+                        <input type="date" id="fecha-hasta">
+                    </div>
+                    <button class="btn btn-primary" onclick="generarReporte()">🔍 Generar reporte</button>
+                </div>
+                <div class="atajos">
+                    <span>Atajos:</span>
+                    <button class="btn btn-chip" onclick="aplicarAtajo('hoy')">Hoy</button>
+                    <button class="btn btn-chip" onclick="aplicarAtajo('semana')">Esta semana</button>
+                    <button class="btn btn-chip" onclick="aplicarAtajo('mes')">Este mes</button>
+                    <button class="btn btn-chip" onclick="aplicarAtajo('mes-anterior')">Mes anterior</button>
+                    <button class="btn btn-chip" onclick="aplicarAtajo('anio')">Este año</button>
+                </div>
+            </div>
+
+            <div id="resultado-rango" class="hidden" style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
+
+                <div class="toolbar no-print">
+                    <button class="btn btn-blue" onclick="window.print()">🖨️ Imprimir Reporte</button>
+                    <button class="btn" onclick="exportarCSV()">⬇️ Exportar CSV (Excel)</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>Consumo Total del Período</span>
+                        <span id="rango-bloques-badge" style="font-size: 0.85rem; color: var(--accent-green);">0 bloques en total</span>
+                    </div>
+                    <div class="total-box">
+                        <span class="title">MATERIA PRIMA TOTAL:</span>
+                        <span class="value" id="rango-total-kg">0,00 KG</span>
+                    </div>
+                    <div class="summary-grid" id="rango-summary-cards"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>Producción por Cajón y Densidad</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cajón</th>
+                                    <th>Densidad</th>
+                                    <th>Bloques</th>
+                                    <th>Materia prima (KG)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-rango-densidades"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>Detalle por Día (KG de cada compuesto)</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="tabla-dias">
+                            <thead id="thead-rango-dias"></thead>
+                            <tbody id="tabla-rango-dias"></tbody>
+                            <tfoot id="tfoot-rango-dias"></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- MODAL DE TABLA DE FÓRMULAS DE REFERENCIA -->
+    <div class="modal" id="modal-formulas">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tabla Completa de Fórmulas Base (KG por Bloque)</h2>
+                <button class="close-btn" onclick="toggleModal(false)">&times;</button>
+            </div>
+
+            <h3 style="margin-top: 15px; margin-bottom: 10px; color: #60a5fa;">CAJÓN 240</h3>
+            <div class="table-responsive" style="margin-bottom: 25px;">
+                <table id="tabla-ref-240"></table>
+            </div>
+
+            <h3 style="margin-top: 15px; margin-bottom: 10px; color: #34d399;">CAJÓN 280</h3>
+            <div class="table-responsive">
+                <table id="tabla-ref-280"></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- Supabase JS (versión fija) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
