@@ -37,8 +37,17 @@ const COMPUESTOS = ["AGUA", "SILICONA", "GLISERINA", "AMINA", "T.9", "TDI", "CLO
 /* ---------- CONEXIÓN A SUPABASE ---------- */
 const TABLA = 'lotes';
 const cfg = window.SUPABASE_CONFIG || {};
-const supabaseConfigurado = !!(cfg.url && cfg.anonKey && !cfg.url.includes('TU-PROYECTO') && cfg.anonKey !== 'TU_ANON_KEY');
-const sb = supabaseConfigurado ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
+
+// Limpia errores comunes al pegar la URL: espacios, barra final o "/rest/v1" de más
+const supabaseUrl = String(cfg.url || '')
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(/\/(rest|auth|storage)\/v1$/, '')
+    .replace(/\/+$/, '');
+const supabaseKey = String(cfg.anonKey || '').trim();
+
+const supabaseConfigurado = !!(supabaseUrl && supabaseKey && !supabaseUrl.includes('TU-PROYECTO') && supabaseKey !== 'TU_ANON_KEY');
+const sb = supabaseConfigurado ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
 
 /* ---------- ESTADO ---------- */
 let lotesDia = [];              // lotes de la fecha seleccionada
