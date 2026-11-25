@@ -493,7 +493,13 @@ function renderizarReporteRango() {
 function exportarCSV() {
     if (lotesRango.length === 0) { mostrarToast('No hay datos para exportar', 'error'); return; }
 
-    const num = (v, dec) => v.toFixed(dec).replace('.', ',');
+    // Mismo redondeo que la pantalla, coma decimal y SIN separador de miles
+    // (así Excel lo reconoce como número: 1715,000)
+    const num = (v, dec) => new Intl.NumberFormat('es-AR', {
+        minimumFractionDigits: dec,
+        maximumFractionDigits: dec,
+        useGrouping: false
+    }).format(v);
     const filas = [];
     filas.push(['Fecha', 'Bloques', 'Total KG', ...COMPUESTOS].join(';'));
 
